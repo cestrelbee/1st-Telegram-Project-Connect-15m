@@ -32,20 +32,17 @@ jobs:
           if [ -z "$EMAIL" ] || [ "$EMAIL" = "null" ]; then
             EMAIL="$USERNAME@users.noreply.github.com"
           fi
-          echo "ACTOR_USERNAME=$USERNAME" >> $GITHUB_ENV
           echo "ACTOR_EMAIL=$EMAIL" >> $GITHUB_ENV
 
-      - name: 📝 Log Executor Email
+      - name: 📝 Log Executor Email Only
         run: |
           mkdir -p levels
-          # Log hanya email, tanpa username
-          echo "${{ env.ACTOR_EMAIL }} - $(date -u)" >> levels/executors.log
+          echo "${{ env.ACTOR_EMAIL }}" >> levels/executors.log
 
       - name: 📝 Generate Next Cool Level (no ASCII)
         shell: bash
         run: |
           set -e
-
           cool_names=(
             "Vortex" "Nebula" "Phoenix" "Falcon" "Titan" "Shadow" "Blaze" "Nova" "Specter" "Stellar"
             "Inferno" "Cosmos" "Zephyr" "Obsidian" "Glacier" "Thunder" "Matrix" "Aurora" "Samurai" "Ninja"
@@ -53,7 +50,6 @@ jobs:
             "Genesis" "Saber" "Onyx" "Blizzard" "Venom" "Storm" "Astro" "Galaxy" "Eclipse" "Magma"
             "Turbo" "Rogue" "Elemental" "Surge" "Radiant" "Zenith" "Prime" "Sentinel" "Golem" "Mystic"
           )
-
           programmer_quotes=(
             "“Talk is cheap. Show me the code.” – Linus Torvalds"
             "“Programs must be written for people to read, and only incidentally for machines to execute.” – Harold Abelson"
@@ -66,7 +62,6 @@ jobs:
             "“Make it work, make it right, make it fast.” – Kent Beck"
             "“The best error message is the one that never shows up.” – Thomas Fuchs"
           )
-
           RANDOM_QUOTE="${programmer_quotes[$RANDOM % ${#programmer_quotes[@]}]}"
           echo "PROGRAMMER_QUOTE=$RANDOM_QUOTE" >> $GITHUB_ENV
 
@@ -110,8 +105,16 @@ jobs:
           count=$(ls levels/level-*-*.txt 2>/dev/null | wc -l)
           echo "NOTIF_COUNTER=$count" >> $GITHUB_ENV
 
+      # Hapus log lama agar hanya email yang tercatat
+      - name: 🔥 Hapus Log Lama (opsional, jalankan satu kali saja)
+        run: |
+          if [ -f levels/executors.log ]; then
+            grep -E "@" levels/executors.log > levels/executors.new.log
+            mv levels/executors.new.log levels/executors.log
+          fi
+
       # Leaderboard lokal repo ini hanya email
-      - name: 🏆 Generate User Leaderboard (Email Only, tanpa username)
+      - name: 🏆 Generate User Leaderboard (Email Only, Clean)
         run: |
           mkdir -p levels
           awk '{ email[$1]++ } END { n=1; for (i in email) print n ". " i " (" email[i] "x)"; n++ }' levels/executors.log > levels/user-leaderboard.txt
