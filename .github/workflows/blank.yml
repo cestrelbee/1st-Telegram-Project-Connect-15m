@@ -105,29 +105,21 @@ jobs:
           count=$(ls levels/level-*-*.txt 2>/dev/null | wc -l)
           echo "NOTIF_COUNTER=$count" >> $GITHUB_ENV
 
-      # Hapus log lama agar hanya email yang tercatat
-      - name: 🔥 Hapus Log Lama (opsional, jalankan satu kali saja)
-        run: |
-          if [ -f levels/executors.log ]; then
-            grep -E "@" levels/executors.log > levels/executors.new.log
-            mv levels/executors.new.log levels/executors.log
-          fi
-
-      # Leaderboard lokal repo ini hanya email
-      - name: 🏆 Generate User Leaderboard (Email Only, Clean)
+      # Leaderboard eksekutor lokal repo (hanya email)
+      - name: 🏆 Generate User Leaderboard (Email Only)
         run: |
           mkdir -p levels
           awk '{ email[$1]++ } END { n=1; for (i in email) print n ". " i " (" email[i] "x)"; n++ }' levels/executors.log > levels/user-leaderboard.txt
           sed -i '1s/^/🏆 Leaderboard Eksekutor Workflow\n===============================\n/' levels/user-leaderboard.txt
 
-      # Download leaderboard dari repo lain
-      - name: 🔄 Download Leaderboard dari Repo Lain
+      # Download leaderboard dari repo lain ke file berbeda
+      - name: 🔄 Download Leaderboard dari Repo Lain (pisah file)
         run: |
           curl -s -o levels/leaderboard-repo-lain.txt \
             "https://raw.githubusercontent.com/0x00abieharyatmo/1st-Telegram-Project-Connect-15m/main/levels/user-leaderboard.txt" || touch levels/leaderboard-repo-lain.txt
 
-      # Gabungkan leaderboard lokal dan dari repo lain, hanya email
-      - name: 🏆 Gabung Leaderboard Cross-Repo (Email Only, Rapi)
+      # Gabungkan leaderboard lokal dan dari repo lain ke file gabungan
+      - name: 🏆 Gabung Leaderboard Cross-Repo (gabungan file baru)
         run: |
           echo "🏆 Leaderboard Gabungan" > levels/leaderboard-gabungan.txt
           echo "============================" >> levels/leaderboard-gabungan.txt
