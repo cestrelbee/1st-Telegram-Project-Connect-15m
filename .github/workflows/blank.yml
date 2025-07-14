@@ -38,6 +38,7 @@ jobs:
       - name: 📝 Log Executor Email
         run: |
           mkdir -p levels
+          # Log hanya email, tanpa username
           echo "${{ env.ACTOR_EMAIL }} - $(date -u)" >> levels/executors.log
 
       - name: 📝 Generate Next Cool Level (no ASCII)
@@ -109,8 +110,8 @@ jobs:
           count=$(ls levels/level-*-*.txt 2>/dev/null | wc -l)
           echo "NOTIF_COUNTER=$count" >> $GITHUB_ENV
 
-      # Leaderboard lokal repo ini berdasarkan email saja
-      - name: 🏆 Generate User Leaderboard (by Email Only)
+      # Leaderboard lokal repo ini hanya email
+      - name: 🏆 Generate User Leaderboard (Email Only, tanpa username)
         run: |
           mkdir -p levels
           awk '{ email[$1]++ } END { n=1; for (i in email) print n ". " i " (" email[i] "x)"; n++ }' levels/executors.log > levels/user-leaderboard.txt
@@ -122,8 +123,8 @@ jobs:
           curl -s -o levels/leaderboard-repo-lain.txt \
             "https://raw.githubusercontent.com/0x00abieharyatmo/1st-Telegram-Project-Connect-15m/main/levels/user-leaderboard.txt" || touch levels/leaderboard-repo-lain.txt
 
-      # Gabungkan leaderboard lokal dan dari repo lain, berdasarkan email saja & rapi
-      - name: 🏆 Gabung Leaderboard Cross-Repo (Email Only)
+      # Gabungkan leaderboard lokal dan dari repo lain, hanya email
+      - name: 🏆 Gabung Leaderboard Cross-Repo (Email Only, Rapi)
         run: |
           echo "🏆 Leaderboard Gabungan" > levels/leaderboard-gabungan.txt
           echo "============================" >> levels/leaderboard-gabungan.txt
