@@ -1,4 +1,4 @@
-name: 🚀 Auto Cool Level Generator (Leaderboard Cross-Repo)
+name: 🚀 Auto Cool Level Generator
 
 on:
   schedule:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   generate-level:
-    name: 🌟 Generate Cool Level & Leaderboard Gabungan
+    name: 🌟 Generate Cool Level
     runs-on: ubuntu-latest
 
     steps:
@@ -35,10 +35,10 @@ jobs:
           echo "ACTOR_USERNAME=$USERNAME" >> $GITHUB_ENV
           echo "ACTOR_EMAIL=$EMAIL" >> $GITHUB_ENV
 
-      - name: 📝 Log Executor Username & Email
+      - name: 📝 Log Executor Email
         run: |
           mkdir -p levels
-          echo "${{ env.ACTOR_USERNAME }} ${{ env.ACTOR_EMAIL }} - $(date -u)" >> levels/executors.log
+          echo "${{ env.ACTOR_EMAIL }} - $(date -u)" >> levels/executors.log
 
       - name: 📝 Generate Next Cool Level (no ASCII)
         shell: bash
@@ -109,34 +109,21 @@ jobs:
           count=$(ls levels/level-*-*.txt 2>/dev/null | wc -l)
           echo "NOTIF_COUNTER=$count" >> $GITHUB_ENV
 
-      # Leaderboard lokal repo ini
-      - name: 🏆 Generate User Leaderboard (gabung kombinasi username)
+      # Leaderboard lokal repo ini berdasarkan email saja
+      - name: 🏆 Generate User Leaderboard (by Email Only)
         run: |
           mkdir -p levels
-          awk '{ user[$1" "$2]++ } END { for (i in user) print user[i], i }' levels/executors.log | sort -k2,2 -k3,3 > levels/user-leaderboard-raw.txt
-          awk '
-          {
-            arr[$2] = arr[$2] (arr[$2] ? ". " : "") $2 " (" $3 ") (" $1 "x)"
-          }
-          END {
-            n=1
-            for (i in arr) {
-              print n ". " arr[i]
-              n++
-            }
-          }
-          ' levels/user-leaderboard-raw.txt > levels/user-leaderboard.txt
+          awk '{ email[$1]++ } END { n=1; for (i in email) print n ". " i " (" email[i] "x)"; n++ }' levels/executors.log > levels/user-leaderboard.txt
           sed -i '1s/^/🏆 Leaderboard Eksekutor Workflow\n===============================\n/' levels/user-leaderboard.txt
 
       # Download leaderboard dari repo lain
       - name: 🔄 Download Leaderboard dari Repo Lain
         run: |
-          # Ganti dengan repo dan branch lain yang kamu ingin tampilkan leaderboard-nya
           curl -s -o levels/leaderboard-repo-lain.txt \
             "https://raw.githubusercontent.com/0x00abieharyatmo/1st-Telegram-Project-Connect-15m/main/levels/user-leaderboard.txt" || touch levels/leaderboard-repo-lain.txt
 
-      # Gabungkan leaderboard lokal dan dari repo lain
-      - name: 🏆 Gabung Leaderboard Cross-Repo
+      # Gabungkan leaderboard lokal dan dari repo lain, berdasarkan email saja & rapi
+      - name: 🏆 Gabung Leaderboard Cross-Repo (Email Only)
         run: |
           echo "🏆 Leaderboard Gabungan" > levels/leaderboard-gabungan.txt
           echo "============================" >> levels/leaderboard-gabungan.txt
@@ -147,10 +134,9 @@ jobs:
           echo "Leaderboard Repo Lain:" >> levels/leaderboard-gabungan.txt
           tail -n +3 levels/leaderboard-repo-lain.txt >> levels/leaderboard-gabungan.txt
 
-      # Set leaderboard gabungan ke env untuk Telegram
       - name: 📤 Set Leaderboard Env Gabungan
         run: |
-          BOARD=$(tail -n +3 levels/leaderboard-gabungan.txt | head -20 | tr '\n' '\r\n')
+          BOARD=$(cat levels/leaderboard-gabungan.txt | tr '\n' '\r\n')
           echo "LEADERBOARD=${BOARD}" >> $GITHUB_ENV
 
       - name: 🔔 Send Notification to Telegram
