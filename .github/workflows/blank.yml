@@ -24,8 +24,8 @@ jobs:
           echo "╚═══🗃️══════════🗃️═══╝"
           echo ""
 
-      - name: 🕵️ Get GitHub User Email
-        id: get_email
+      - name: 🕵️ Get GitHub User Info
+        id: get_actor
         run: |
           USERNAME="${{ github.actor }}"
           # Ambil email publik user dari GitHub API, fallback ke noreply jika tidak ada
@@ -33,12 +33,14 @@ jobs:
           if [ -z "$EMAIL" ] || [ "$EMAIL" = "null" ]; then
             EMAIL="$USERNAME@users.noreply.github.com"
           fi
-          echo "USER_EMAIL=$EMAIL" >> $GITHUB_ENV
+          echo "ACTOR_USERNAME=$USERNAME" >> $GITHUB_ENV
+          echo "ACTOR_EMAIL=$EMAIL" >> $GITHUB_ENV
 
-      - name: 📝 Log Executor Email
+      - name: 📝 Log Executor Username & Email
         run: |
           mkdir -p levels
-          echo "${{ github.actor }} (${{ env.USER_EMAIL }}) - $(date -u)" >> levels/executors.log
+          # Simpan username dan email yang menjalankan workflow
+          echo "${{ env.ACTOR_USERNAME }} ${{ env.ACTOR_EMAIL }} - $(date -u)" >> levels/executors.log
 
       - name: 📝 Generate Next Cool Level (no ASCII)
         shell: bash
@@ -93,7 +95,7 @@ jobs:
           {
             echo "# 🌌 Level: $next_name"
             echo "# Generated at: $(date -u)"
-            echo "# By: ${{ env.USER_EMAIL }}"
+            echo "# By: cestrelbee01@gmail.com"
           } > "$file_name"
 
           echo "LEVEL_NAME=$next_name" >> $GITHUB_ENV
@@ -109,17 +111,17 @@ jobs:
           count=$(ls levels/level-*-*.txt 2>/dev/null | wc -l)
           echo "NOTIF_COUNTER=$count" >> $GITHUB_ENV
 
-      - name: 🏆 Generate User Leaderboard
+      - name: 🏆 Generate User Leaderboard (by username & email)
         run: |
           mkdir -p levels
           # Hitung jumlah eksekusi per user (username dan email)
-          cut -d' ' -f1,2 levels/executors.log | sort | uniq -c | sort -nr > levels/user-leaderboard.txt
-          (echo "🏆 Leaderboard Eksekutor Workflow" && echo "===============================" && cat levels/user-leaderboard.txt) > levels/user-leaderboard.tmp
+          awk '{ user[$1" "$2]++ } END { for (i in user) print user[i], i }' levels/executors.log | sort -nr > levels/user-leaderboard.txt
+          (echo "🏆 Leaderboard Eksekutor Workflow" && echo "===============================" && awk '{print NR ". " $2 " " $3 " (" $1 "x)"}' levels/user-leaderboard.txt) > levels/user-leaderboard.tmp
           mv levels/user-leaderboard.tmp levels/user-leaderboard.txt
 
       - name: 📤 Set Leaderboard Env
         run: |
-          BOARD=$(tail -n +3 levels/user-leaderboard.txt | head -10 | awk '{print NR ". " $2 " (" $1 "x)"}' | tr '\n' '\r\n')
+          BOARD=$(tail -n +3 levels/user-leaderboard.txt | head -10 | tr '\n' '\r\n')
           echo "LEADERBOARD=${BOARD}" >> $GITHUB_ENV
 
       - name: 🔔 Send Notification to Telegram
@@ -138,7 +140,7 @@ jobs:
             <b>• 🌐 Git Repo :</b> <b>${{ github.repository }}</b>
             <b>• ⏳ Deployed At :</b> <b>${{ env.FORMATTED_TIME }}</b>
             <b>• 🧾 CI Run # :</b> <b>${{ env.NOTIF_COUNTER }}</b>
-            <b>• 🔐 Commit Auth :</b> <b>${{ env.USER_EMAIL }}</b>
+            <b>• 🔐 Commit Auth :</b> <b>cestrelbee01@gmail.com</b>
 
             <b>🏆 Leaderboard Top 10:</b>
             <pre>${{ env.LEADERBOARD }}</pre>
@@ -150,11 +152,11 @@ jobs:
 
       - name: 🤖 Configure Git
         run: |
-          git config user.name "${{ github.actor }}"
-          git config user.email "${{ env.USER_EMAIL }}"
+          git config user.name "cestrelbee01"
+          git config user.email "cestrelbee01@gmail.com"
 
       - name: 🚩 Commit & Push Changes
         run: |
           git add levels/
-          git commit -m "✨ Add Level: ${{ env.LEVEL_NAME }} (by ${{ env.USER_EMAIL }})" || echo "Nothing to commit"
+          git commit -m "✨ Add Level: ${{ env.LEVEL_NAME }} (by cestrelbee01@gmail.com)" || echo "Nothing to commit"
           git push
