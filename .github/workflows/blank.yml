@@ -52,7 +52,9 @@ jobs:
 
       - name: 🏆 Gabung & Sederhanakan Leaderboard Gabungan (Email Only, Simple)
         run: |
-          cat levels/user-leaderboard.txt levels/leaderboard-repo-lain.txt | grep -E "^[0-9]+\. " | awk '{print $2}' > levels/all_emails.tmp
+          touch levels/user-leaderboard.txt
+          touch levels/leaderboard-repo-lain.txt
+          cat levels/user-leaderboard.txt levels/leaderboard-repo-lain.txt | grep -E "^[0-9]+\. " | awk '{print $2}' > levels/all_emails.tmp || true
           sort levels/all_emails.tmp | uniq > levels/all_emails.txt
           > levels/leaderboard-gabungan.txt
           echo "🏆 Leaderboard Gabungan" > levels/leaderboard-gabungan.txt
